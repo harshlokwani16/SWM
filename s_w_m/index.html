@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Webmap 201</title>
+        <link rel="stylesheet" href="src/leaflet.css">
+        <link rel="stylesheet" href="src/css/bootstrap.css">
+        <script src="src/leaflet-src.js"></script>
+        <script src="src/jquery-3.2.0.min.js"></script>
+        <script src="src/leaflet.wms.js"></script>
+
+        <style>
+            #mapdiv {
+                height:100vh;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="side-bar" class="col-md-0"></div>
+        <div id="mapdiv" class="col-md-12"></div>
+        <script>
+            var mymap;
+            var lyrOSM;
+            
+            $(document).ready(function(){
+                mymap = L.map('mapdiv', {center:[19.0760, 72.8777], zoom:13});
+                lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+                mymap.addLayer(lyrOSM);
+                var basemaps;
+
+var source = L.wms.source(
+        "http://159.65.146.249/geoserver/wms",
+        {
+            "format": "image/png",
+            "transparent": "true"
+        }        
+    );
+
+    var layers = {
+        'S Ward': source.getLayer("geonode:S_WARD_ALL_POLYGONE"),
+        'L Ward': source.getLayer("geonode:L_WARD_POLYGON0"),
+        'H west': source.getLayer("geonode:buildings_in_hwest"),
+        'S ward village boundary': source.getLayer('geonode:S_WARD_VILLAGE_BOUNDARY')
+    };
+
+    // Create layer control
+    L.control.layers(basemaps, layers).addTo(mymap);
+
+
+            });
+        </script>
+    </body>
+</html>
