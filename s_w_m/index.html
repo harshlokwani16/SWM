@@ -40,11 +40,43 @@ var source = L.wms.source(
         'S Ward': source.getLayer("geonode:S_WARD_ALL_POLYGONE"),
         'L Ward': source.getLayer("geonode:L_WARD_POLYGON0"),
         'H west': source.getLayer("geonode:buildings_in_hwest"),
+        'Dummy H west': source.getLayer("geonode:dummy_hwest_data"),
         'S ward village boundary': source.getLayer('geonode:S_WARD_VILLAGE_BOUNDARY')
     };
 
     // Create layer control
     L.control.layers(basemaps, layers).addTo(mymap);
+
+    function queryCoords(latlng) {
+        queryCoordinates = latlng;
+        var p = new Proj4js.Point(latlng.lng,latlng.lat);
+        Proj4js.transform(src, dst, p);
+        
+        var defaultParameters = {
+            service : 'WFS',
+            version : '1.1.1',
+            request : 'GetFeature',
+            typeName : 'dummy_hwest_data',
+            maxFeatures : 100,
+            outputFormat : 'text/javascript',
+            format_options : 'callback:getJson',
+            SrsName : 'EPSG:4326'
+        };
+        var customParams = {
+            cql_filter:'CONTAINS(geom, POINT(' + p.x + ' ' + p.y + '))'
+        };
+        var parameters = L.Util.extend(defaultParameters, customParams);
+        $.ajax({
+            url : owsrootUrl + L.Util.getParamString(parameters),
+            dataType : 'jsonp',
+            jsonpCallback : 'getJson',
+            success : handleJson
+        });
+    }
+    map.on('click', function(e) {        
+        clickCoords = e.latlng
+        queryCoords(clickCoords)
+    });
 
 
             });
