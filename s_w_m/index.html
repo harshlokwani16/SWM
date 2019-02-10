@@ -6,8 +6,10 @@
         <link rel="stylesheet" href="src/leaflet.css">
         <link rel="stylesheet" href="src/css/bootstrap.css">
         <script src="src/leaflet-src.js"></script>
-        <script src="src/jquery-3.2.0.min.js"></script>
+        <script type="text/javascript" src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
         <script src="src/leaflet.wms.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/8.5.1/nouislider.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/8.5.1/nouislider.min.js"></script>
 
         <style>
             #mapdiv {
@@ -17,31 +19,98 @@
     </head>
     <body>
         <div id="side-bar" class="col-md-0"></div>
+        <!-- <div id="slider" style="top: 0px; right: 1px; margin: 10px 25px;"></div>
+<div style="margin-right: auto; margin-left: auto; width: 90%; margin-bottom: 10px; text-align: center;">
+<input type="number" min='1' max='35675999' id="input-number-min">
+<input type="number" min='2' max='35676000' id="input-number-max">
+</div> -->
         <div id="mapdiv" class="col-md-12"></div>
         <script>
-            var mymap;
-            var lyrOSM;
-            
-            $(document).ready(function(){
-                mymap = L.map('mapdiv', {center:[19.0760, 72.8777], zoom:13});
-                lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
-                mymap.addLayer(lyrOSM);
-                var basemaps;
+// var slidervar = document.getElementById('slider');
+// noUiSlider.create(slidervar, {
+//     connect: true,
+//     start: [1, 35676000],
+//     range: {
+//         min: 1,
+//         max: 35676000
+//     }
+// });
+// document.getElementById('input-number-min').setAttribute("value", 1);
+// document.getElementById('input-number-max').setAttribute("value", 35676000);
+// var inputNumberMin = document.getElementById('input-number-min');
+// var inputNumberMax = document.getElementById('input-number-max');
+// inputNumberMin.addEventListener('change', function() {
+//     slidervar.noUiSlider.set([this.value, null]);
+// });
+// inputNumberMax.addEventListener('change', function() {
+//     slidervar.noUiSlider.set([null, this.value]);
+// });
+// slidervar.noUiSlider.on('update', function(values, handle) {
+//     //handle = 0 if min-slider is moved and handle = 1 if max slider is moved
+//     if (handle == 0) {
+//         document.getElementById('input-number-min').value = values[0];
+//     } else {
+//         document.getElementById('input-number-max').value = values[1];
+//     }
+//     //we will definitely do more here...wait
+// })
+var mymap;
+var lyrOSM;
 
-var source = L.wms.source(
-        "http://159.65.146.249/geoserver/wms",
-        {
+$(document).ready(function() {
+    mymap = L.map('mapdiv', {
+        center: [19.0760, 72.8777],
+        zoom: 13
+    });
+    lyrOSM = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png');
+    mymap.addLayer(lyrOSM);
+    var basemaps;
+
+    var source = L.wms.source(
+        "http://159.65.146.249/geoserver/wms", {
             "format": "image/png",
             "transparent": "true"
-        }        
+        }
     );
+    var blueMarker = {
+  radius: 8,
+  fillColor: "#0000ff",
+  fillOpacity: 1
+};
+
+var redMarker = {
+  radius: 8,
+  fillColor: "#ff0000",
+  fillOpacity: 1
+}
+   $.getJSON('swm_hwest.geojson', function (geojson) {
+  L.geoJson(geojson, {
+     pointToLayer: function (feature, latlng) {
+    if(feature.properties.is_the_segregation_at_source_adequate === "Yes")
+    {
+      return L.circleMarker(latlng, blueMarker);
+    }
+    else
+    {
+      return L.circleMarker(latlng, redMarker);
+    }
+  },
+    onEachFeature: function (feature, layer) {
+      layer.bindPopup("Society Name: "+feature.properties.society_name+"<br>Segeregation at source: "+feature.properties.is_the_segregation_at_source_adequate);
+    }
+     // filter: function(feature, layer) {   
+     //     return (feature.properties.society_name === "Amber");
+     //   }
+  }).addTo(mymap);
+});
 
     var layers = {
         'S Ward': source.getLayer("geonode:S_WARD_ALL_POLYGONE"),
         'L Ward': source.getLayer("geonode:L_WARD_POLYGON0"),
         'H west': source.getLayer("geonode:buildings_in_hwest"),
         'Dummy H west': source.getLayer("geonode:dummy_hwest_data"),
-        'S ward village boundary': source.getLayer('geonode:S_WARD_VILLAGE_BOUNDARY')
+        'S ward village boundary': source.getLayer('geonode:S_WARD_VILLAGE_BOUNDARY'),
+        'School Data': source.getLayer("geonode:school_may310")
     };
 
     // Create layer control
@@ -49,37 +118,37 @@ var source = L.wms.source(
 
     function queryCoords(latlng) {
         queryCoordinates = latlng;
-        var p = new Proj4js.Point(latlng.lng,latlng.lat);
+        var p = new Proj4js.Point(latlng.lng, latlng.lat);
         Proj4js.transform(src, dst, p);
-        
+
         var defaultParameters = {
-            service : 'WFS',
-            version : '1.1.1',
-            request : 'GetFeature',
-            typeName : 'dummy_hwest_data',
-            maxFeatures : 100,
-            outputFormat : 'text/javascript',
-            format_options : 'callback:getJson',
-            SrsName : 'EPSG:4326'
+            service: 'WFS',
+            version: '1.1.1',
+            request: 'GetFeature',
+            typeName: 'school_may310',
+            maxFeatures: 100,
+            outputFormat: 'text/javascript',
+            format_options: 'callback:getJson',
+            SrsName: 'EPSG:4326'
         };
         var customParams = {
-            cql_filter:'CONTAINS(geom, POINT(' + p.x + ' ' + p.y + '))'
+            cql_filter: 'CONTAINS(geom, POINT(' + p.x + ' ' + p.y + '))'
         };
         var parameters = L.Util.extend(defaultParameters, customParams);
         $.ajax({
-            url : owsrootUrl + L.Util.getParamString(parameters),
-            dataType : 'jsonp',
-            jsonpCallback : 'getJson',
-            success : handleJson
+            url: owsrootUrl + L.Util.getParamString(parameters),
+            dataType: 'jsonp',
+            jsonpCallback: 'getJson',
+            success: handleJson
         });
     }
-    map.on('click', function(e) {        
+    map.on('click', function(e) {
         clickCoords = e.latlng
         queryCoords(clickCoords)
     });
 
 
-            });
+});
         </script>
     </body>
 </html>
